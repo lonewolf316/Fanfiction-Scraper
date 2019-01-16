@@ -24,13 +24,25 @@ def get_fanfic_text(sid):
 
 def get_sids_from_catagory(crossover,medium,ffcatagory):
     if crossover:
-        webpage = "http://fanfiction.net/"+"crossovers"+medium+"/"+ffcatagory
+        webpage = str("http://fanfiction.net/"+"crossovers"+medium+"/"+ffcatagory)
     else:
-        webpage = "http://fanfiction.net/"+medium+"/"+ffcatagory
-
-    r = requests.get(webpage)
+        webpage = str("http://fanfiction.net/"+medium+"/"+ffcatagory)
+    print("Retrieving webpage:", webpage)
+    start = time.time()
+    session = requests.Session()
+    session.trust_env = False 
+    r = session.get(webpage, allow_redirects=False)
+    print("Retrieved webpage. Scanning for SIDs now.")
+    end = time.time()
+    print("This took:", end-start)
     soup = bs4.BeautifulSoup(r.content, "html.parser")
     for a in soup.find_all('a', href=True):
-        if str(a['href']).startswith("/s/"):
-            print("Found the URL:", a['href'])
+        fullurl = str(a['href'])
+        if fullurl.startswith("/s/"):
+            slicedurl = fullurl[3:]
+            endofsid = slicedurl.find('/')
+            sid = slicedurl[:endofsid]
+            print(sid)
+
+
 get_sids_from_catagory(False, "movie", "Zootopia")
