@@ -23,19 +23,34 @@ def get_fanfic_text(sid):
     f.close
 
 def get_sids_from_catagory(crossover,medium,ffcatagory):
+    #create extensions for url based on input
     if crossover:
-        webpage = str("http://fanfiction.net/"+"crossovers"+medium+"/"+ffcatagory)
+        webpageext = "crossovers"+medium+"/"+ffcatagory
     else:
-        webpage = str("http://fanfiction.net/"+medium+"/"+ffcatagory)
+        webpageext = medium+"/"+ffcatagory
+    webpage = str("http://fanfiction.net/") + webpageext
+
+    #get page 1 of fanfiction and import to bs4 for processing
     print("Retrieving webpage:", webpage)
     start = time.time()
     session = requests.Session()
     session.trust_env = False 
-    r = session.get(webpage, allow_redirects=False)
+    r = session.get(webpage)
     print("Retrieved webpage. Scanning for SIDs now.")
     end = time.time()
-    print("This took:", end-start)
+    print("This took:", end-start, "seconds")
     soup = bs4.BeautifulSoup(r.content, "html.parser")
+
+    #loop to find link of last page
+    templinklist=[]
+    for a in soup.find_all('a', href=True):
+        fullurl = str(a['href'])
+        if fullurl.startswith("/"+webpageext):
+            templinklist.append(fullurl)
+    lastpage = templinklist[-2]
+    lastpagenum = lastpage[(lastpage.find("&pe")-2):]
+
+    #iterate through links on first page to collect SIDs
     for a in soup.find_all('a', href=True):
         fullurl = str(a['href'])
         if fullurl.startswith("/s/"):
@@ -43,6 +58,6 @@ def get_sids_from_catagory(crossover,medium,ffcatagory):
             endofsid = slicedurl.find('/')
             sid = slicedurl[:endofsid]
             print(sid)
-
+    pagenum=2
 
 get_sids_from_catagory(False, "movie", "Zootopia")
