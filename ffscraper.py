@@ -1,5 +1,4 @@
-import time, os
-import fanfiction
+import time, os, fanfiction, requests, bs4
 if not os.path.exists("stories"):
     os.makedirs("stories")
 
@@ -19,10 +18,19 @@ def get_fanfic_text(sid):
             fulltext=fulltext+str(chaptext)+" "
     if not os.path.exists("stories/"+canon):
         os.makedirs("stories/"+canon)
-    f = open("stories/"+canon+"/"+title+".txt", "w")
-    print(fulltext)
+    f = open("stories/"+canon+"/"+str(sid)+" "+title+".txt", "w")
     f.write(str(fulltext))
     f.close
-#StoryID
-sid = "4264713"
-get_fanfic_text(sid)
+
+def get_sids_from_catagory(crossover,medium,ffcatagory):
+    if crossover:
+        webpage = "http://fanfiction.net/"+"crossovers"+medium+"/"+ffcatagory
+    else:
+        webpage = "http://fanfiction.net/"+medium+"/"+ffcatagory
+
+    r = requests.get(webpage)
+    soup = bs4.BeautifulSoup(r.content, "html.parser")
+    for a in soup.find_all('a', href=True):
+        if str(a['href']).startswith("/s/"):
+            print("Found the URL:", a['href'])
+get_sids_from_catagory(False, "movie", "Zootopia")
