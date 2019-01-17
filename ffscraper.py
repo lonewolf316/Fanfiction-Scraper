@@ -23,19 +23,20 @@ def get_fanfic_text(sid):
     f.close
 
 def get_sids_from_catagory(crossover,medium,ffcatagory):
-    #create extensions for url based on input
+    #create extensions for url based on input, create directory for saving, and craft url to scrape
     if crossover:
-        webpageext = "crossovers"+medium+"/"+ffcatagory
+        webpageext = "crossovers"+medium+"/" 
     else:
-        webpageext = medium+"/"+ffcatagory
-    webpage = str("http://fanfiction.net/") + webpageext
+        webpageext = medium+"/"
+    if not os.path.exists(webpageext):
+        os.makedirs(webpageext)
+    webpage = str("http://fanfiction.net/") + webpageext + ffcatagory
 
     #get page 1 of fanfiction and import to bs4 for processing
-    start = time.time()
     session = requests.Session()
     session.trust_env = False 
     r = session.get(webpage)
-    end = time.time()
+
     soup = bs4.BeautifulSoup(r.content, "html.parser")
 
     #loop to find link of last page
@@ -70,11 +71,18 @@ def get_sids_from_catagory(crossover,medium,ffcatagory):
                 pagesidlist.append(sid)
         print("Found", len(pagesidlist), "SIDs on page")
 
-        for sid1 in pagesidlist:
-            if sid1 not in sidlist:
-                sidlist.append(sid1)
-
+        for sid in pagesidlist:
+            if sid not in sidlist:
+                sidlist.append(sid)
         currentpage+=1
-    print(sidlist)
-    print(len(sidlist))
+
+    #Save into file    
+    savedir = "sids/"+webpageext+ffcatagory+".txt"
+    print("Saving:", len(sidlist), "SIDs to", savedir)
+    with open(savedir, "w") as f:
+        for sid in sidlist:
+            f.write(sid+"/n")
+        f.close()
+    print("Done")
+
 get_sids_from_catagory(False, "movie", "Zootopia")
