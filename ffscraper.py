@@ -20,8 +20,11 @@ def get_fanfic_text(sid):
     if not os.path.exists("stories/"+canon):
         os.makedirs("stories/"+canon)
     f = open("stories/"+canon+"/"+str(sid)+" "+title+".txt", "w")
+    f.write(str(metadata)+"\n")
+    f.write("\n")
     f.write(str(fulltext))
     f.close
+    print("Saved to", "stories/"+canon+"/"+str(sid)+" "+title+".txt")
 
 def get_sids_from_catagory(crossover,medium,ffcatagory):
     #create extensions for url based on input, create directory for saving, and craft url to scrape
@@ -107,5 +110,17 @@ def get_sids_from_catagory(crossover,medium,ffcatagory):
             f.write(sid+"\n")
         f.close()
     print("Done")
+    return(savedir)
 
-get_sids_from_catagory(False, "tv", "Shield")
+def iterate_sids_from_file(filename):
+    with open(filename,'r') as f:
+        for line in f:
+            get_fanfic_text(int(line))
+
+def scrape_sids_and_stories(crossover,medium,ffcatagory):
+    filename = get_sids_from_catagory(crossover,medium,ffcatagory)
+    iterate_sids_from_file(filename)
+
+
+scrape_sids_and_stories(False, "tv", "Shield")
+#need to impliment punctuation stripping
