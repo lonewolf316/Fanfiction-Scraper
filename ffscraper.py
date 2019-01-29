@@ -1,6 +1,5 @@
 import time, os, fanfiction, requests, bs4
 
-
 def get_fanfic_text(sid):
     if not os.path.exists("stories"):
         os.makedirs("stories")
@@ -30,27 +29,20 @@ def get_fanfic_text(sid):
     print("Saved to", "stories/"+canon+"/"+str(sid)+" "+title+".txt")
 
 def get_sids_from_catagory(webpage):
-
-    webpageext=webpage[27:]
+    webpageext=webpage[21:]
     print(webpageext)
-    #get page 1 of fanfiction and import to bs4 for processing
     session = requests.Session()
     session.trust_env = False 
     r = session.get(webpage)
-
     soup = bs4.BeautifulSoup(r.content, "html.parser")
-
     singlepage = True
-    #loop to find link of last page
     templinklist=[]
     for a in soup.find_all('a', href=True):
         fullurl = str(a['href'])
-        if fullurl.startswith("/"+webpageext):
+        if fullurl.startswith(webpageext):
             templinklist.append(fullurl)
         if "&p=" in fullurl:
-            
             singlepage = False
-    
     sidlist=[]
     if singlepage:
         print("This has only one page")
@@ -67,23 +59,22 @@ def get_sids_from_catagory(webpage):
                 endofsid = slicedurl.find('/')
                 sid = slicedurl[:endofsid]
                 sidlist.append(sid)
-
     else:
-        print("This canon has multiple pages")
         lastpage = templinklist[-2]
-        lastpagenum = lastpage[(len(lastpage))-lastpage.find("&pe")*-1:]
+        print(lastpage)
+        lastpagenum = lastpage[lastpage.find("&p=")+3:]
+        print("This canon has ",lastpagenum," pages")
         currentpage = 1
-        webpage=webpage+"?&srt=1&r=103&p="
+        webpage=webpage+"?&srt=1&r=10&p="
         #Loop for each page until last page and get SIDs on each page
         while currentpage <= int(lastpagenum):
-            print("Waiting 1 second to prevent spam")
-            time.sleep(1)
+            print("Waiting .5 second to prevent spam")
+            time.sleep(.5)
             downloadpage = webpage + str(currentpage)
             print("Downloading and parsing page:", downloadpage)
             r = session.get(downloadpage)
             soup = bs4.BeautifulSoup(r.content, "html.parser")
             pagesidlist=[]
-
         #iterate through links on page to collect SIDs
             for a in soup.find_all('a', href=True):
                 fullurl = str(a['href'])
@@ -93,12 +84,10 @@ def get_sids_from_catagory(webpage):
                     sid = slicedurl[:endofsid]
                     pagesidlist.append(sid)
             print("Found", len(pagesidlist), "SIDs on page")
-
             for sid in pagesidlist:
                 if sid not in sidlist:
                     sidlist.append(sid)
             currentpage+=1
-
     return(sidlist)
 
 
@@ -107,7 +96,6 @@ def scrape_site_for_categories():
     webpage = str("http://fanfiction.net")
     if not os.path.exists("links"):
         os.makedirs("links")
-
     #Crossover story links
     crossoverlinks=[]
     finallinks=[]
@@ -124,7 +112,6 @@ def scrape_site_for_categories():
             link = str(a['href'])
             if link.startswith("/crossovers/"):
                 crossoverlinks.append(link)
-
     for crosslink in crossoverlinks:
         print("Sleeping to prevent spam")
         print("Searching "+crosslink)
@@ -138,12 +125,12 @@ def scrape_site_for_categories():
             link = str(a['href'])
             if "Crossovers" in link:
                 if link not in finallinks:
-                    finallinks.append(link)             
-        f = open("links/crossovers.txt", "w")
-        for link in finallinks:
-            f.write(webpage+str(link)+"\n")
-        f.close
-
+                    finallinks.append(link)
+    finallinks.sort()             
+    f = open("links/crossovers.txt", "w")
+    for link in finallinks:
+        f.write(webpage+str(link)+"\n")
+    f.close
     #Rgular story links
     for media in mediatypes:
         time.sleep(1)
