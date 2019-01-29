@@ -19,6 +19,9 @@ def get_fanfic_text(sid):
             fulltext=fulltext+str(chaptext)+" "
     if not os.path.exists("stories/"+canon):
         os.makedirs("stories/"+canon)
+    fulltext = str(fulltext).replace("\\n","")
+    fulltext = str(fulltext).replace("\\'","'")
+    title = "".join([c for c in title if c.isalpha() or c.isdigit() or c==' ']).rstrip()
     f = open("stories/"+canon+"/"+str(sid)+" "+title+".txt", "w")
     f.write(str(metadata)+"\n")
     f.write("\n")
@@ -26,16 +29,10 @@ def get_fanfic_text(sid):
     f.close
     print("Saved to", "stories/"+canon+"/"+str(sid)+" "+title+".txt")
 
-def get_sids_from_catagory(crossover,medium,ffcatagory):
-    #create extensions for url based on input, create directory for saving, and craft url to scrape
-    if crossover:
-        webpageext = "crossovers/" + medium + "/"
-    else:
-        webpageext = medium + "/"
-    if not os.path.exists("sids/"+webpageext):
-        os.makedirs("sids/"+webpageext)
-    webpage = str("http://fanfiction.net/") + webpageext + ffcatagory
+def get_sids_from_catagory(webpage):
 
+    webpageext=webpage[27:]
+    print(webpageext)
     #get page 1 of fanfiction and import to bs4 for processing
     session = requests.Session()
     session.trust_env = False 
@@ -76,7 +73,7 @@ def get_sids_from_catagory(crossover,medium,ffcatagory):
         lastpage = templinklist[-2]
         lastpagenum = lastpage[(len(lastpage))-lastpage.find("&pe")*-1:]
         currentpage = 1
-        webpage=webpage+"/?&srt=1&r=103&p="
+        webpage=webpage+"?&srt=1&r=103&p="
         #Loop for each page until last page and get SIDs on each page
         while currentpage <= int(lastpagenum):
             print("Waiting 1 second to prevent spam")
@@ -102,25 +99,65 @@ def get_sids_from_catagory(crossover,medium,ffcatagory):
                     sidlist.append(sid)
             currentpage+=1
 
-    #Save into file    
-    savedir = "sids/"+webpageext+ffcatagory+".txt"
-    print("Saving:", len(sidlist), "SIDs to", savedir)
-    with open(savedir, "w") as f:
-        for sid in sidlist:
-            f.write(sid+"\n")
-        f.close()
-    print("Done")
-    return(savedir)
-
-def iterate_sids_from_file(filename):
-    with open(filename,'r') as f:
-        for line in f:
-            get_fanfic_text(int(line))
-
-def scrape_sids_and_stories(crossover,medium,ffcatagory):
-    filename = get_sids_from_catagory(crossover,medium,ffcatagory)
-    iterate_sids_from_file(filename)
+    return(sidlist)
 
 
-scrape_sids_and_stories(False, "tv", "Shield")
-#need to impliment punctuation stripping
+def scrape_site_for_categories():
+    mediatypes=["anime","book","cartoon","comic","game","misc","movie","play","tv"]
+    webpage = str("http://fanfiction.net")
+    if not os.path.exists("links"):
+        os.makedirs("links")
+
+    #Crossover story links
+    crossoverlinks=[]
+    finallinks=[]
+    for media in mediatypes:
+        print("Sleeping to prevent spam")
+        print("Searching "+media)
+        time.sleep(1)
+        fullurl = webpage + "/crossovers/" + media + "/"
+        session = requests.Session()
+        session.trust_env = False 
+        r = session.get(fullurl)
+        soup = bs4.BeautifulSoup(r.content, "html.parser")
+        for a in soup.find_all('a', href=True):
+            link = str(a['href'])
+            if link.startswith("/crossovers/"):
+                crossoverlinks.append(link)
+
+    for crosslink in crossoverlinks:
+        print("Sleeping to prevent spam")
+        print("Searching "+crosslink)
+        time.sleep(1)
+        fullurl2 = webpage + crosslink
+        session = requests.Session()
+        session.trust_env = False
+        r = session.get(fullurl2)
+        soup = bs4.BeautifulSoup(r.content, "html.parser")
+        for a in soup.find_all('a', href=True):
+            link = str(a['href'])
+            if "Crossovers" in link:
+                if link not in finallinks:
+                    finallinks.append(link)             
+        f = open("links/crossovers.txt", "w")
+        for link in finallinks:
+            f.write(webpage+str(link)+"\n")
+        f.close
+
+    #Rgular story links
+    for media in mediatypes:
+        time.sleep(1)
+        linklist=[]
+        fullurl = webpage + "/" + media + "/"
+        session = requests.Session()
+        session.trust_env = False 
+        r = session.get(fullurl)
+        soup = bs4.BeautifulSoup(r.content, "html.parser")
+        for a in soup.find_all('a', href=True):
+            link = str(a['href'])
+            if link.startswith("/"+media):
+                linklist.append(link)
+        f = open("links/"+media+".txt", "w")
+        for link in linklist:
+            f.write(webpage+str(link)+"\n")
+        f.close
