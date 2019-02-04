@@ -10,6 +10,7 @@ def findnth(string, substring, n):
 #ffscraper.scrape_site_for_categories() #Get a link to every catagory on the site and save them in text files
 #remove the first link from each file, except the crossover file
 
+"""
 #Create folders for saving sids
 mediatypes=["anime","book","cartoon","comic","game","misc","movie","play","tv","crossovers"]
 if not os.path.exists("sids"):
@@ -38,3 +39,16 @@ for txt in os.listdir("links"):
         for sid in sids:
             f.write(sid+"\n")
         f.close()
+"""
+
+#Scrape Fanfiction
+for media in os.listdir("sids"):
+    for canon in os.listdir("sids/"+media):
+        canonsiddir="sids/"+media+"/"+canon
+        f = open(canonsiddir,"r")
+        for line in f:
+            line = str(line).replace("\n","")
+            ffscraper.get_fanfic_text(line)
+
+                
+            
