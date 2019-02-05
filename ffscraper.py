@@ -1,5 +1,9 @@
 import time, os, fanfiction, requests, bs4
 
+def filesafestr(inputstr):
+    outputstr = "".join([c for c in str(inputstr) if c.isalpha() or c.isdigit() or c==' ']).rstrip()
+    return(outputstr)
+
 def get_fanfic_text(sid):
     if not os.path.exists("stories"):
         os.makedirs("stories")
@@ -8,25 +12,26 @@ def get_fanfic_text(sid):
     title = metadata.get("title")
     canon = metadata.get("canon")
     chapters = metadata.get("num_chapters")
+    canontype = metadata.get("canon_type")
     fulltext=""
     if chapters == None:
         fulltext=scraper.scrape_chapter(sid, title, keep_html=False)
     else:
         for cid in range(int(chapters)):
             chaptext = scraper.scrape_chapter(sid, str(int(cid)+1), keep_html=False)
-            time.sleep(1)
             fulltext=fulltext+str(chaptext)+" "
-    if not os.path.exists("stories/"+canon):
-        os.makedirs("stories/"+canon)
-    fulltext = str(fulltext).replace("\\n","")
+    fulltext = str(fulltext).replace("\\n","\n")
     fulltext = str(fulltext).replace("\\'","'")
-    title = "".join([c for c in title if c.isalpha() or c.isdigit() or c==' ']).rstrip()
-    f = open("stories/"+canon+"/"+str(sid)+" "+title+".txt", "w")
+    fulltext = fulltext[2:-2]
+    writedir = "stories/"+filesafestr(canontype)+"/"+filesafestr(canon)+"/"+str(sid)+" "+filesafestr(title)+".txt"
+    writepath = "stories/"+filesafestr(canontype)+"/"+filesafestr(canon)
+    os.makedirs(writepath, exist_ok=True)
+    f = open(writedir, "w", encoding="utf-8")
     f.write(str(metadata)+"\n")
     f.write("\n")
     f.write(str(fulltext))
     f.close
-    print("Saved to", "stories/"+canon+"/"+str(sid)+" "+title+".txt")
+    print("Saved to", writedir)
 
 def get_sids_from_catagory(webpage):
     webpageext=webpage[21:]
