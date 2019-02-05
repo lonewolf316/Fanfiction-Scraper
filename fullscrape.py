@@ -42,13 +42,29 @@ for txt in os.listdir("links"):
 """
 
 #Scrape Fanfiction
+scrapedSid=open("scrapedsid.txt","a+")
+scrapedSid.close()
 for media in os.listdir("sids"):
     for canon in os.listdir("sids/"+media):
         canonsiddir="sids/"+media+"/"+canon
         f = open(canonsiddir,"r")
         for line in f:
             line = str(line).replace("\n","")
-            ffscraper.get_fanfic_text(line)
+            fileread = open("scrapedsid.txt","r+")
+            found = False
+            for ssid in fileread:
+                ssid = str(ssid).replace("\n","")
+                if line==ssid:
+                    found = True
+                    break
+            fileread.close() 
+            if not found:
+                ffscraper.get_fanfic_text(line)
+                filewrite = open("scrapedsid.txt","a+")
+                filewrite.write(line+"\n")
+                filewrite.close()
+            else:
+                print("SID:", line, "already scraped.")
 
                 
             
