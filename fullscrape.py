@@ -35,6 +35,8 @@ for txt in os.listdir("links"):
         slash2 = findnth(line,"/",upperbound)
         filename = line[slash1+1:slash2]
         sids = ffscraper.get_sids_from_catagory(line)
+        if len(filename)>=250:
+            filename = filename[:249]
         f = open("sids/"+media+"/"+filename+".txt","w")
         for sid in sids:
             f.write(sid+"\n")

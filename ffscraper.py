@@ -44,7 +44,7 @@ def get_sids_from_catagory(webpage):
     templinklist=[]
     for a in soup.find_all('a', href=True):
         fullurl = str(a['href'])
-        if fullurl.startswith(webpageext):
+        if fullurl.startswith(webpageext) or str(fullurl.replace("_","-")).startswith(webpageext):
             templinklist.append(fullurl)
         if "&p=" in fullurl:
             singlepage = False
